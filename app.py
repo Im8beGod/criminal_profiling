@@ -4,153 +4,122 @@ import time
 from cases import cases
 from questions import questions
 
-st.set_page_config(page_title="AI Criminal Profiling", layout="wide")
+st.set_page_config(page_title="AI Profiling", layout="wide")
 
-# 🎨 FBI STYLE UI
+# 🎨 UI
 st.markdown("""
 <style>
 .stApp {background:#05070d;color:white;font-family:monospace;}
-.card {background:#0d1117;padding:12px;border-radius:10px;margin:6px;}
+.card {background:#0d1117;padding:12px;border-radius:10px;margin:8px;}
+.section {color:#4ea1ff;margin-top:20px;}
 </style>
 """, unsafe_allow_html=True)
 
 st.title("🕵️ Human vs AI Criminal Profiling")
 
-st.warning("⚠️ AI analysis is completely independent of your answers.")
+st.info("Compare your reasoning with an evidence-based AI system.")
 
-st.info("Analyze the case, form your reasoning, and compare it with evidence-based AI.")
-
-# =========================
-# SELECT CASE
-# =========================
 case = st.selectbox("Select Case", cases, format_func=lambda x: x["case_name"])
 
-# =========================
-# CASE
-# =========================
-st.header("📁 Case")
+# 📁 CASE
+st.markdown("## 📁 Case")
 st.write(case["description"])
 
-# =========================
-# EVIDENCE
-# =========================
-st.header("🔍 Evidence")
-
+# 🔍 EVIDENCE
+st.markdown("## 🔍 Evidence")
 for c in case["clues"]:
     st.markdown(f"<div class='card'>• {c['text']}</div>", unsafe_allow_html=True)
 
-# =========================
-# SUSPECTS
-# =========================
-st.header("🧑 Suspects")
-
+# 🧑 SUSPECTS
+st.markdown("## 🧑 Suspects")
 for s in case["suspects"]:
-    st.markdown(f"""
-    <div class='card'>
-    <b>{s['name']}</b><br>
-    {"<br>".join("• " + d for d in s["description"])}
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f"<div class='card'>{s['name']}</div>", unsafe_allow_html=True)
 
-# =========================
-# QUESTIONS (HUMAN THINKING)
-# =========================
-st.header("🧪 Your Reasoning")
+# 🧠 QUESTIONS
+st.markdown("## 🧠 Your Reasoning")
 
-user_answers = {}
+bias_counter = {}
 
 for i, q in enumerate(questions):
-    user_answers[i] = st.radio(q["question"], list(q["options"].keys()), key=i)
+    ans = st.radio(q["question"], list(q["options"].keys()), key=i)
+    bias = q["options"][ans]
+    bias_counter[bias] = bias_counter.get(bias, 0) + 1
 
-# =========================
-# FINAL DECISION
-# =========================
-st.header("🧠 Your Final Decision")
+# 🧠 FINAL GUESS
+user_guess = st.selectbox("Your final suspect:", [s["name"] for s in case["suspects"]])
 
-user_guess = st.selectbox(
-    "Who do you think is the culprit?",
-    [s["name"] for s in case["suspects"]]
-)
+# 🚨 RUN
+if st.button("Run Investigation"):
 
-# =========================
-# ANALYSIS
-# =========================
-if st.button("🚨 Run Investigation"):
-
-    with st.spinner("Running independent analyses..."):
+    with st.spinner("Analyzing..."):
         time.sleep(2)
 
-    # 🔴 HUMAN MODEL
-    human_scores = {}
+    # 🔴 HUMAN RESULT = USER GUESS
+    human_top = user_guess
 
-    for i, ans in user_answers.items():
-        for t, w in questions[i]["options"][ans].items():
-            human_scores[t] = human_scores.get(t, 0) + w
-
-    human_result = {}
-
-    for s in case["suspects"]:
-        score = sum(human_scores.get(t, 0) for t in s["traits"])
-        human_result[s["name"]] = score
-
-    human_top = max(human_result, key=human_result.get)
-
-    # 🔵 AI MODEL (EVIDENCE ONLY)
+    # 🔵 AI MODEL (CONSTRAINT LOGIC)
     ai_scores = {}
-
-    for clue in case["clues"]:
-        for t, w in clue["traits"].items():
-            ai_scores[t] = ai_scores.get(t, 0) + w
-
-    ai_result = {}
+    explanations = {}
 
     for s in case["suspects"]:
-        score = sum(ai_scores.get(t, 0) for t in s["traits"])
-        ai_result[s["name"]] = score
+        score = 0
+        reasons = []
 
-    ai_top = max(ai_result, key=ai_result.get)
+        for clue in case["clues"]:
 
+            if clue["type"] == "constraint":
+                required = clue["rules"]
+
+                if not all(r in s["traits"] for r in required):
+                    score -= 100
+                    reasons.append(f"❌ Failed: {clue['text']}")
+                else:
+                    score += 10
+                    reasons.append(f"✅ Satisfies: {clue['text']}")
+
+        ai_scores[s["name"]] = score
+        explanations[s["name"]] = reasons
+
+    ai_top = max(ai_scores, key=ai_scores.get)
     true = case["true_suspect"]
 
-    # =========================
-    # RESULTS
-    # =========================
-    st.header("⚖️ Investigation Results")
+    # ⚖️ RESULTS
+    st.markdown("## ⚖️ Results")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("🧠 Human Reasoning")
-        st.write(f"Your Guess: {user_guess}")
-        st.write(f"Your Model Suggests: {human_top}")
+        st.subheader("🧠 You")
+        st.write(human_top)
 
     with col2:
-        st.subheader("🤖 AI (Evidence-Based)")
-        st.write(f"AI Predicts: {ai_top}")
+        st.subheader("🤖 AI")
+        st.write(ai_top)
 
-    # =========================
-    # TRUTH
-    # =========================
-    st.header("🕵️ Actual Culprit")
+    # 🕵️ TRUTH
+    st.markdown("## 🕵️ Actual Culprit")
     st.write(true)
 
-    # =========================
-    # INSIGHT
-    # =========================
-    st.header("📊 Insight")
+    # 📊 INSIGHT
+    st.markdown("## 📊 Insight")
 
     if human_top != true:
-        st.error("Your reasoning led to an incorrect conclusion.")
-        st.warning(f"Bias Detected: {case['bias']}")
+        st.error("Your reasoning was incorrect.")
+        top_bias = max(bias_counter, key=bias_counter.get)
+        st.warning(f"Bias Detected: {top_bias}")
     else:
-        st.success("Your reasoning matched the correct answer.")
+        st.success("You got it right!")
 
     if ai_top == true:
-        st.success("AI correctly identified the suspect using evidence.")
+        st.success("AI correctly solved using evidence.")
+
+    # 🧠 EXPLANATION ENGINE
+    st.markdown("## 🧠 AI Reasoning")
+
+    for reason in explanations[ai_top]:
+        st.write(reason)
 
     st.info("""
-    Key Insight:
-    - Humans rely on intuition and bias  
-    - AI relies on structured evidence  
-    - Different reasoning leads to different conclusions  
+    AI eliminates suspects that violate constraints.
+    Humans often focus on motive and ignore feasibility.
     """)
