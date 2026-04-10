@@ -4,65 +4,74 @@ import time
 from cases import cases
 from questions import questions
 
-st.set_page_config(page_title="Forensic Profiling System", layout="wide")
+st.set_page_config(page_title="Investigation Console", layout="wide")
 
-# 🎨 CLEAN FORENSIC UI
+# 🎮 UI
 st.markdown("""
 <style>
-.stApp {
-    background-color: #05070d;
-    color: #e6edf3;
-    font-family: monospace;
-}
-.section {
-    border-bottom: 1px solid #1f2a44;
-    margin-top: 20px;
-    margin-bottom: 10px;
-}
-.card {
-    background: #0d1117;
-    padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 8px;
-}
+.stApp {background:#04060c;color:#e6f1ff;font-family:monospace;}
+.panel {background:#0b1220;padding:12px;border-radius:8px;margin:6px;}
 </style>
 """, unsafe_allow_html=True)
 
-st.title("Forensic Profiling System")
-
-st.caption("Internal Investigation Interface")
+st.title("🕵️ Investigation Console")
 
 # =========================
-# CASE SELECTION
+# 🎯 DIFFICULTY
 # =========================
-case = st.selectbox("Select Case File", cases, format_func=lambda x: x["case_name"])
+difficulty = st.selectbox("Select Difficulty", ["Easy", "Medium", "Hard"])
 
 # =========================
-# CASE FILE
+# 🏆 LEADERBOARD INIT
 # =========================
-st.markdown("## CASE FILE")
+if "leaderboard" not in st.session_state:
+    st.session_state.leaderboard = []
+
+# =========================
+# ⏱️ TIMER
+# =========================
+if "start_time" not in st.session_state:
+    st.session_state.start_time = time.time()
+
+elapsed = int(time.time() - st.session_state.start_time)
+st.write(f"⏱️ Time: {elapsed}s")
+
+# =========================
+# CASE
+# =========================
+case = st.selectbox("Select Case", cases, format_func=lambda x: x["case_name"])
+
+st.markdown("## 📁 Case")
 st.write(case["description"])
 
 # =========================
-# EVIDENCE
+# EVIDENCE (DIFFICULTY)
 # =========================
-st.markdown("## EVIDENCE LOG")
+st.markdown("## 🔍 Evidence")
 
-for c in case["clues"]:
-    st.markdown(f"<div class='card'>• {c['text']}</div>", unsafe_allow_html=True)
+clues = case["clues"]
+
+if difficulty == "Medium":
+    clues = clues[:-1]
+
+elif difficulty == "Hard":
+    clues = clues[:-2]
+
+for c in clues:
+    st.markdown(f"<div class='panel'>• {c['text']}</div>", unsafe_allow_html=True)
 
 # =========================
 # SUSPECTS
 # =========================
-st.markdown("## SUSPECT DATABASE")
+st.markdown("## 🧑 Suspects")
 
 for s in case["suspects"]:
-    st.markdown(f"<div class='card'>{s['name']}</div>", unsafe_allow_html=True)
+    st.markdown(f"<div class='panel'>{s['name']}</div>", unsafe_allow_html=True)
 
 # =========================
-# USER ANALYSIS
+# QUESTIONS
 # =========================
-st.markdown("## INVESTIGATOR INPUT")
+st.markdown("## 🧠 Your Reasoning")
 
 bias_counter = {}
 
@@ -71,90 +80,71 @@ for i, q in enumerate(questions):
     bias = q["options"][ans]
     bias_counter[bias] = bias_counter.get(bias, 0) + 1
 
-user_guess = st.selectbox("Select Primary Suspect", [s["name"] for s in case["suspects"]])
+user_guess = st.selectbox("Select Suspect", [s["name"] for s in case["suspects"]])
 
 # =========================
-# RUN ANALYSIS
+# RUN
 # =========================
-if st.button("Execute Analysis"):
-
-    st.markdown("## ANALYSIS LOG")
-
-    with st.spinner("Running forensic checks..."):
-        time.sleep(1)
+if st.button("🚨 RUN INVESTIGATION"):
 
     ai_scores = {}
-    explanations = {}
 
     for s in case["suspects"]:
         score = 0
-        reasons = []
 
-        st.markdown(f"### Evaluating: {s['name']}")
-
-        for clue in case["clues"]:
-            time.sleep(0.4)
-
+        for clue in clues:
             if clue["type"] == "constraint":
-                required = clue["rules"]
-
-                if not all(r in s["traits"] for r in required):
+                if not all(r in s["traits"] for r in clue["rules"]):
                     score -= 100
-                    st.write(f"[REJECTED] {clue['text']}")
-                    reasons.append(f"Rejected due to: {clue['text']}")
                 else:
                     score += 10
-                    st.write(f"[VALID] {clue['text']}")
-                    reasons.append(f"Valid condition: {clue['text']}")
 
         ai_scores[s["name"]] = score
-        explanations[s["name"]] = reasons
 
     ai_top = max(ai_scores, key=ai_scores.get)
     true = case["true_suspect"]
 
     # =========================
-    # SUMMARY
+    # RESULTS
     # =========================
-    st.markdown("## ANALYSIS SUMMARY")
+    st.markdown("## ⚖️ Results")
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.markdown("### INVESTIGATOR CONCLUSION")
-        st.write(user_guess)
-
-    with col2:
-        st.markdown("### SYSTEM CONCLUSION")
-        st.write(ai_top)
+    st.write("🧠 You:", user_guess)
+    st.write("🤖 System:", ai_top)
+    st.write("🕵️ Actual:", true)
 
     # =========================
-    # FINAL RESULT
+    # SCORE SYSTEM
     # =========================
-    st.markdown("## CASE RESOLUTION")
-    st.write(f"Confirmed Individual: {true}")
+    score = 0
 
-    # =========================
-    # EVALUATION
-    # =========================
-    st.markdown("## EVALUATION")
-
-    if user_guess != true:
-        st.write("Investigator conclusion inconsistent with evidence.")
-        top_bias = max(bias_counter, key=bias_counter.get)
-        st.write(f"Observed reasoning bias: {top_bias}")
+    if user_guess == true:
+        score += 50
     else:
-        st.write("Investigator conclusion aligned with evidence.")
+        score -= 20
 
-    if ai_top == true:
-        st.write("System analysis consistent with all constraints.")
+    # Difficulty multiplier
+    if difficulty == "Medium":
+        score *= 1.5
+    elif difficulty == "Hard":
+        score *= 2
+
+    st.markdown(f"## 🎮 Score: {int(score)}")
 
     # =========================
-    # FINAL NOTE
+    # SAVE TO LEADERBOARD
     # =========================
-    st.markdown("## OBSERVATION")
+    name = st.text_input("Enter your name for leaderboard:")
 
-    st.write("""
-    The system evaluates constraints and eliminates invalid candidates.
-    Human reasoning often prioritizes subjective factors over feasibility.
-    """)
+    if st.button("Submit Score"):
+        st.session_state.leaderboard.append((name, int(score)))
+
+    # =========================
+    # LEADERBOARD
+    # =========================
+    st.markdown("## 🏆 Leaderboard")
+
+    sorted_board = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)
+
+    for i, (n, s) in enumerate(sorted_board[:5]):
+        st.write(f"{i+1}. {n} — {s}")
