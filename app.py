@@ -6,15 +6,17 @@ from questions import questions
 
 st.set_page_config(page_title="Investigation Console", layout="wide")
 
-# 🎮 UI
+# 🎮 GAME UI
 st.markdown("""
 <style>
 .stApp {background:#04060c;color:#e6f1ff;font-family:monospace;}
-.panel {background:#0b1220;padding:12px;border-radius:8px;margin:6px;}
+.panel {background:#0b1220;padding:12px;border-radius:8px;margin:8px;border:1px solid #1f2a44;}
+.title {color:#00ffcc;font-weight:bold;}
 </style>
 """, unsafe_allow_html=True)
 
 st.title("🕵️ Investigation Console")
+st.markdown("**Mission: Analyze the case and identify the suspect.**")
 
 # =========================
 # 🎯 DIFFICULTY
@@ -37,23 +39,22 @@ elapsed = int(time.time() - st.session_state.start_time)
 st.write(f"⏱️ Time: {elapsed}s")
 
 # =========================
-# CASE
+# 📁 CASE
 # =========================
 case = st.selectbox("Select Case", cases, format_func=lambda x: x["case_name"])
 
-st.markdown("## 📁 Case")
-st.write(case["description"])
+st.markdown("## 📁 Case File")
+st.markdown(f"<div class='panel'>{case['description']}</div>", unsafe_allow_html=True)
 
 # =========================
-# EVIDENCE (DIFFICULTY)
+# 🔍 EVIDENCE
 # =========================
-st.markdown("## 🔍 Evidence")
+st.markdown("## 🔍 Evidence Log")
 
 clues = case["clues"]
 
 if difficulty == "Medium":
     clues = clues[:-1]
-
 elif difficulty == "Hard":
     clues = clues[:-2]
 
@@ -61,17 +62,24 @@ for c in clues:
     st.markdown(f"<div class='panel'>• {c['text']}</div>", unsafe_allow_html=True)
 
 # =========================
-# SUSPECTS
+# 🧑 SUSPECTS (FIXED)
 # =========================
-st.markdown("## 🧑 Suspects")
+st.markdown("## 🧑 Suspect Profiles")
+
+st.warning("Carefully analyze each suspect. Motive alone is not enough—capability matters.")
 
 for s in case["suspects"]:
-    st.markdown(f"<div class='panel'>{s['name']}</div>", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div class='panel'>
+    <b>{s['name']}</b><br>
+    {"<br>".join("• " + p for p in s["profile"])}
+    </div>
+    """, unsafe_allow_html=True)
 
 # =========================
-# QUESTIONS
+# 🧠 USER THINKING
 # =========================
-st.markdown("## 🧠 Your Reasoning")
+st.markdown("## 🧠 Your Analysis")
 
 bias_counter = {}
 
@@ -80,24 +88,40 @@ for i, q in enumerate(questions):
     bias = q["options"][ans]
     bias_counter[bias] = bias_counter.get(bias, 0) + 1
 
-user_guess = st.selectbox("Select Suspect", [s["name"] for s in case["suspects"]])
+# =========================
+# 🎯 FINAL DECISION
+# =========================
+st.markdown("## 🎯 Final Decision")
+
+user_guess = st.selectbox(
+    "Select the suspect you believe is responsible:",
+    [s["name"] for s in case["suspects"]]
+)
 
 # =========================
-# RUN
+# 🚨 RUN ANALYSIS
 # =========================
-if st.button("🚨 RUN INVESTIGATION"):
+if st.button("🚨 Run Investigation"):
+
+    st.markdown("## 🧠 System Analysis")
 
     ai_scores = {}
 
     for s in case["suspects"]:
         score = 0
 
+        st.markdown(f"### Evaluating: {s['name']}")
+
         for clue in clues:
+            time.sleep(0.4)
+
             if clue["type"] == "constraint":
                 if not all(r in s["traits"] for r in clue["rules"]):
                     score -= 100
+                    st.error(f"❌ Eliminated: {clue['text']}")
                 else:
                     score += 10
+                    st.success(f"✔ Valid: {clue['text']}")
 
         ai_scores[s["name"]] = score
 
@@ -105,46 +129,83 @@ if st.button("🚨 RUN INVESTIGATION"):
     true = case["true_suspect"]
 
     # =========================
-    # RESULTS
+    # 📊 DASHBOARD
+    # =========================
+    st.markdown("## 📊 Evaluation Dashboard")
+
+    max_score = max(ai_scores.values())
+
+    for s, score in ai_scores.items():
+        normalized = int(((score + 100) / (max_score + 100)) * 100)
+        st.write(s)
+        st.progress(max(0, normalized))
+
+    # =========================
+    # ⚖️ RESULTS
     # =========================
     st.markdown("## ⚖️ Results")
 
-    st.write("🧠 You:", user_guess)
-    st.write("🤖 System:", ai_top)
-    st.write("🕵️ Actual:", true)
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.subheader("🧠 Your Conclusion")
+        st.write(user_guess)
+
+    with col2:
+        st.subheader("🤖 System Conclusion")
+        st.write(ai_top)
 
     # =========================
-    # SCORE SYSTEM
+    # 🕵️ TRUTH
+    # =========================
+    st.markdown("## 🕵️ Case Resolution")
+    st.write(true)
+
+    # =========================
+    # 🎮 SCORE
     # =========================
     score = 0
 
     if user_guess == true:
         score += 50
+        st.success("✔ Correct deduction")
     else:
         score -= 20
+        st.error("❌ Incorrect reasoning")
 
     # Difficulty multiplier
     if difficulty == "Medium":
-        score *= 1.5
+        score = int(score * 1.5)
     elif difficulty == "Hard":
-        score *= 2
+        score = int(score * 2)
 
-    st.markdown(f"## 🎮 Score: {int(score)}")
+    st.markdown(f"### 🎮 Score: {score}")
 
     # =========================
-    # SAVE TO LEADERBOARD
+    # 🏆 LEADERBOARD
     # =========================
-    name = st.text_input("Enter your name for leaderboard:")
+    name = st.text_input("Enter your name:")
 
     if st.button("Submit Score"):
-        st.session_state.leaderboard.append((name, int(score)))
+        st.session_state.leaderboard.append((name, score))
 
-    # =========================
-    # LEADERBOARD
-    # =========================
     st.markdown("## 🏆 Leaderboard")
 
     sorted_board = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)
 
     for i, (n, s) in enumerate(sorted_board[:5]):
         st.write(f"{i+1}. {n} — {s}")
+
+    # =========================
+    # 📊 INSIGHT
+    # =========================
+    st.markdown("## 📊 Insight")
+
+    if user_guess != true:
+        top_bias = max(bias_counter, key=bias_counter.get)
+        st.warning(f"Detected Bias: {top_bias}")
+
+    st.info("""
+    The system eliminates suspects that violate constraints.
+    Human reasoning often focuses on motive rather than feasibility.
+    """)
