@@ -6,7 +6,7 @@ from questions import questions
 
 st.set_page_config(page_title="AI Criminal Profiling", layout="wide")
 
-# 🎨 STYLE
+# 🎨 FBI STYLE UI
 st.markdown("""
 <style>
 .stApp {background:#05070d;color:white;font-family:monospace;}
@@ -16,19 +16,23 @@ st.markdown("""
 
 st.title("🕵️ Human vs AI Criminal Profiling")
 
-st.info("Analyze the case carefully. Then compare your reasoning with AI.")
+st.warning("⚠️ AI analysis is completely independent of your answers.")
 
-# 📁 SELECT CASE
+st.info("Analyze the case, form your reasoning, and compare it with evidence-based AI.")
+
+# =========================
+# SELECT CASE
+# =========================
 case = st.selectbox("Select Case", cases, format_func=lambda x: x["case_name"])
 
 # =========================
-# 📁 CASE
+# CASE
 # =========================
 st.header("📁 Case")
 st.write(case["description"])
 
 # =========================
-# 🔍 EVIDENCE
+# EVIDENCE
 # =========================
 st.header("🔍 Evidence")
 
@@ -36,7 +40,7 @@ for c in case["clues"]:
     st.markdown(f"<div class='card'>• {c['text']}</div>", unsafe_allow_html=True)
 
 # =========================
-# 🧑 SUSPECTS (FULL INFO)
+# SUSPECTS
 # =========================
 st.header("🧑 Suspects")
 
@@ -44,14 +48,14 @@ for s in case["suspects"]:
     st.markdown(f"""
     <div class='card'>
     <b>{s['name']}</b><br>
-    {"<br>".join("• " + d for d in s.get("description", []))}
+    {"<br>".join("• " + d for d in s["description"])}
     </div>
     """, unsafe_allow_html=True)
 
 # =========================
-# 🧪 QUESTIONS (THINKING)
+# QUESTIONS (HUMAN THINKING)
 # =========================
-st.header("🧪 Your Analysis")
+st.header("🧪 Your Reasoning")
 
 user_answers = {}
 
@@ -59,9 +63,9 @@ for i, q in enumerate(questions):
     user_answers[i] = st.radio(q["question"], list(q["options"].keys()), key=i)
 
 # =========================
-# 🧠 FINAL DECISION
+# FINAL DECISION
 # =========================
-st.header("🧠 Final Decision")
+st.header("🧠 Your Final Decision")
 
 user_guess = st.selectbox(
     "Who do you think is the culprit?",
@@ -69,14 +73,14 @@ user_guess = st.selectbox(
 )
 
 # =========================
-# 🚨 ANALYZE
+# ANALYSIS
 # =========================
 if st.button("🚨 Run Investigation"):
 
-    with st.spinner("Analyzing..."):
+    with st.spinner("Running independent analyses..."):
         time.sleep(2)
 
-    # 🧠 HUMAN MODEL
+    # 🔴 HUMAN MODEL
     human_scores = {}
 
     for i, ans in user_answers.items():
@@ -91,7 +95,7 @@ if st.button("🚨 Run Investigation"):
 
     human_top = max(human_result, key=human_result.get)
 
-    # 🤖 AI MODEL
+    # 🔵 AI MODEL (EVIDENCE ONLY)
     ai_scores = {}
 
     for clue in case["clues"]:
@@ -109,38 +113,44 @@ if st.button("🚨 Run Investigation"):
     true = case["true_suspect"]
 
     # =========================
-    # ⚖️ RESULTS
+    # RESULTS
     # =========================
-    st.header("⚖️ Results")
+    st.header("⚖️ Investigation Results")
 
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("🧠 Your Conclusion")
-        st.write(user_guess)
+        st.subheader("🧠 Human Reasoning")
+        st.write(f"Your Guess: {user_guess}")
+        st.write(f"Your Model Suggests: {human_top}")
 
     with col2:
-        st.subheader("🤖 AI Conclusion")
-        st.write(ai_top)
+        st.subheader("🤖 AI (Evidence-Based)")
+        st.write(f"AI Predicts: {ai_top}")
 
     # =========================
-    # 🕵️ TRUTH
+    # TRUTH
     # =========================
     st.header("🕵️ Actual Culprit")
     st.write(true)
 
     # =========================
-    # 📊 INSIGHT
+    # INSIGHT
     # =========================
     st.header("📊 Insight")
 
-    if user_guess != true:
-        st.error("Your reasoning was influenced by bias.")
-        st.warning(f"Detected Bias: {case['bias']}")
+    if human_top != true:
+        st.error("Your reasoning led to an incorrect conclusion.")
+        st.warning(f"Bias Detected: {case['bias']}")
     else:
-        st.success("You correctly identified the suspect!")
+        st.success("Your reasoning matched the correct answer.")
 
     if ai_top == true:
-        st.success("AI correctly solved the case using evidence.")
+        st.success("AI correctly identified the suspect using evidence.")
 
-    st.info("Humans rely on intuition. AI relies on structured evidence.")
+    st.info("""
+    Key Insight:
+    - Humans rely on intuition and bias  
+    - AI relies on structured evidence  
+    - Different reasoning leads to different conclusions  
+    """)
