@@ -2,33 +2,33 @@ def calculate_results(case, user_answers, questions):
 
     trait_scores = {}
 
-    # 🧠 Step 1: Add CLUE weights (fixed truth)
-    for clue in case["clues"]:
-        for trait, weight in clue["traits"].items():
+    # ✅ Add clue weights (SAFE)
+    for clue in case.get("clues", []):
+        for trait, weight in clue.get("traits", {}).items():
             trait_scores[trait] = trait_scores.get(trait, 0) + weight
 
-    # 🧠 Step 2: Add USER weights
+    # ✅ Add user answers
     for q_index, selected_option in user_answers.items():
         option_weights = questions[q_index]["options"][selected_option]
 
         for trait, weight in option_weights.items():
             trait_scores[trait] = trait_scores.get(trait, 0) + weight
 
-    # 🧠 Step 3: Score suspects
+    # ✅ Score suspects
     suspect_scores = {}
 
-    for suspect in case["suspects"]:
+    for suspect in case.get("suspects", []):
         name = suspect["name"]
         suspect_scores[name] = 0
 
-        for trait in suspect["traits"]:
+        for trait in suspect.get("traits", []):
             if trait in trait_scores:
                 suspect_scores[name] += trait_scores[trait]
 
-    # 🧠 Step 4: Convert to probability
+    # ✅ Convert to %
     total = sum(suspect_scores.values())
-    probabilities = {}
 
+    probabilities = {}
     for s, score in suspect_scores.items():
         probabilities[s] = round((score / total) * 100, 2) if total > 0 else 0
 
