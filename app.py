@@ -227,7 +227,6 @@ if st.button("🚨 RUN INVESTIGATION"):
         score = 0
         container = st.empty()
 
-        # Show evaluating first
         container.markdown(f"<div class='panel highlight-eval'><b>{s['name']}</b><br>Evaluating...</div>", unsafe_allow_html=True)
         time.sleep(0.5)
 
@@ -265,11 +264,11 @@ if st.button("🚨 RUN INVESTIGATION"):
     st.markdown("## ⚖️ RESULTS")
 
     c1, c2, c3 = st.columns(3)
-    c1.write("🧠 You:", user_guess)
-    c2.write("🤖 System:", ai_top)
-    c3.write("📊 Model:", ml_top)
+    c1.write(f"🧠 You: {user_guess}")
+    c2.write(f"🤖 System: {ai_top}")
+    c3.write(f"📊 Model: {ml_top}")
 
-    st.write("🕵️ Actual:", true)
+    st.write(f"🕵️ Actual: {true}")
 
     # FEEDBACK
     st.markdown("## 🧠 REASONING FEEDBACK")
