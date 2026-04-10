@@ -6,50 +6,57 @@ from questions import questions
 
 st.set_page_config(page_title="Investigation Console", layout="wide")
 
-# 🎮 GAME UI
+# 🎮 UI
 st.markdown("""
 <style>
 .stApp {background:#04060c;color:#e6f1ff;font-family:monospace;}
 .panel {background:#0b1220;padding:12px;border-radius:8px;margin:8px;border:1px solid #1f2a44;}
-.title {color:#00ffcc;font-weight:bold;}
 </style>
 """, unsafe_allow_html=True)
 
 st.title("🕵️ Investigation Console")
-st.markdown("**Mission: Analyze the case and identify the suspect.**")
+
+# =========================
+# 🧠 AUTO PROFILE GENERATOR
+# =========================
+def generate_profile(traits):
+    mapping = {
+        "admin_access": "Has administrative system access",
+        "internal_access": "Can access internal network",
+        "direct_access": "Can directly access system",
+        "technical": "Has strong technical skills",
+        "low_technical": "Limited technical ability",
+        "social": "Highly social and trusted",
+        "revenge": "Has possible motive (conflict history)",
+        "low_access": "Limited permissions",
+        "works_late": "Often active during late hours"
+    }
+
+    return [mapping.get(t, t) for t in traits]
 
 # =========================
 # 🎯 DIFFICULTY
 # =========================
-difficulty = st.selectbox("Select Difficulty", ["Easy", "Medium", "Hard"])
+difficulty = st.selectbox("Difficulty", ["Easy", "Medium", "Hard"])
 
 # =========================
-# 🏆 LEADERBOARD INIT
+# 🏆 LEADERBOARD
 # =========================
 if "leaderboard" not in st.session_state:
     st.session_state.leaderboard = []
 
 # =========================
-# ⏱️ TIMER
-# =========================
-if "start_time" not in st.session_state:
-    st.session_state.start_time = time.time()
-
-elapsed = int(time.time() - st.session_state.start_time)
-st.write(f"⏱️ Time: {elapsed}s")
-
-# =========================
-# 📁 CASE
+# CASE
 # =========================
 case = st.selectbox("Select Case", cases, format_func=lambda x: x["case_name"])
 
-st.markdown("## 📁 Case File")
+st.markdown("## 📁 Case")
 st.markdown(f"<div class='panel'>{case['description']}</div>", unsafe_allow_html=True)
 
 # =========================
-# 🔍 EVIDENCE
+# EVIDENCE
 # =========================
-st.markdown("## 🔍 Evidence Log")
+st.markdown("## 🔍 Evidence")
 
 clues = case["clues"]
 
@@ -62,24 +69,26 @@ for c in clues:
     st.markdown(f"<div class='panel'>• {c['text']}</div>", unsafe_allow_html=True)
 
 # =========================
-# 🧑 SUSPECTS (FIXED)
+# SUSPECTS (AUTO PROFILE)
 # =========================
-st.markdown("## 🧑 Suspect Profiles")
+st.markdown("## 🧑 Suspects")
 
-st.warning("Carefully analyze each suspect. Motive alone is not enough—capability matters.")
+st.warning("Study each suspect carefully. Capability matters more than motive.")
 
 for s in case["suspects"]:
+    profile = generate_profile(s["traits"])
+
     st.markdown(f"""
     <div class='panel'>
     <b>{s['name']}</b><br>
-    {"<br>".join("• " + p for p in s["profile"])}
+    {"<br>".join("• " + p for p in profile)}
     </div>
     """, unsafe_allow_html=True)
 
 # =========================
-# 🧠 USER THINKING
+# QUESTIONS
 # =========================
-st.markdown("## 🧠 Your Analysis")
+st.markdown("## 🧠 Your Reasoning")
 
 bias_counter = {}
 
@@ -89,31 +98,25 @@ for i, q in enumerate(questions):
     bias_counter[bias] = bias_counter.get(bias, 0) + 1
 
 # =========================
-# 🎯 FINAL DECISION
+# FINAL GUESS
 # =========================
-st.markdown("## 🎯 Final Decision")
-
-user_guess = st.selectbox(
-    "Select the suspect you believe is responsible:",
-    [s["name"] for s in case["suspects"]]
-)
+user_guess = st.selectbox("Your suspect:", [s["name"] for s in case["suspects"]])
 
 # =========================
-# 🚨 RUN ANALYSIS
+# RUN
 # =========================
 if st.button("🚨 Run Investigation"):
 
-    st.markdown("## 🧠 System Analysis")
-
     ai_scores = {}
+
+    st.markdown("## 🧠 System Analysis")
 
     for s in case["suspects"]:
         score = 0
-
-        st.markdown(f"### Evaluating: {s['name']}")
+        st.markdown(f"### Evaluating {s['name']}")
 
         for clue in clues:
-            time.sleep(0.4)
+            time.sleep(0.3)
 
             if clue["type"] == "constraint":
                 if not all(r in s["traits"] for r in clue["rules"]):
@@ -128,84 +131,40 @@ if st.button("🚨 Run Investigation"):
     ai_top = max(ai_scores, key=ai_scores.get)
     true = case["true_suspect"]
 
-    # =========================
-    # 📊 DASHBOARD
-    # =========================
-    st.markdown("## 📊 Evaluation Dashboard")
-
-    max_score = max(ai_scores.values())
-
-    for s, score in ai_scores.items():
-        normalized = int(((score + 100) / (max_score + 100)) * 100)
-        st.write(s)
-        st.progress(max(0, normalized))
-
-    # =========================
-    # ⚖️ RESULTS
-    # =========================
+    # RESULTS
     st.markdown("## ⚖️ Results")
+    st.write("🧠 You:", user_guess)
+    st.write("🤖 System:", ai_top)
+    st.write("🕵️ Actual:", true)
 
-    col1, col2 = st.columns(2)
+    # SCORE
+    score = 50 if user_guess == true else -20
 
-    with col1:
-        st.subheader("🧠 Your Conclusion")
-        st.write(user_guess)
-
-    with col2:
-        st.subheader("🤖 System Conclusion")
-        st.write(ai_top)
-
-    # =========================
-    # 🕵️ TRUTH
-    # =========================
-    st.markdown("## 🕵️ Case Resolution")
-    st.write(true)
-
-    # =========================
-    # 🎮 SCORE
-    # =========================
-    score = 0
-
-    if user_guess == true:
-        score += 50
-        st.success("✔ Correct deduction")
-    else:
-        score -= 20
-        st.error("❌ Incorrect reasoning")
-
-    # Difficulty multiplier
     if difficulty == "Medium":
-        score = int(score * 1.5)
+        score *= 1.5
     elif difficulty == "Hard":
-        score = int(score * 2)
+        score *= 2
 
-    st.markdown(f"### 🎮 Score: {score}")
+    st.markdown(f"## 🎮 Score: {int(score)}")
 
-    # =========================
-    # 🏆 LEADERBOARD
-    # =========================
-    name = st.text_input("Enter your name:")
+    # LEADERBOARD
+    name = st.text_input("Enter name:")
 
     if st.button("Submit Score"):
-        st.session_state.leaderboard.append((name, score))
+        st.session_state.leaderboard.append((name, int(score)))
 
     st.markdown("## 🏆 Leaderboard")
 
-    sorted_board = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)
+    board = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)
 
-    for i, (n, s) in enumerate(sorted_board[:5]):
+    for i, (n, s) in enumerate(board[:5]):
         st.write(f"{i+1}. {n} — {s}")
 
-    # =========================
-    # 📊 INSIGHT
-    # =========================
+    # INSIGHT
     st.markdown("## 📊 Insight")
 
     if user_guess != true:
-        top_bias = max(bias_counter, key=bias_counter.get)
-        st.warning(f"Detected Bias: {top_bias}")
+        bias = max(bias_counter, key=bias_counter.get)
+        st.warning(f"Bias Detected: {bias}")
 
-    st.info("""
-    The system eliminates suspects that violate constraints.
-    Human reasoning often focuses on motive rather than feasibility.
-    """)
+    st.info("System eliminates impossible suspects. Humans focus on intuition.")
