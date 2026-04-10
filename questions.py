@@ -1,22 +1,20 @@
 questions = [
 
 {
-    "question": "What factor do you consider most important?",
+    "question": "What matters MOST in identifying the culprit?",
     "options": {
-        "Access to system": {"admin_access": 2},
-        "Motive (revenge)": {"revenge": 2},
-        "Technical capability": {"technical": 2},
-        "Social behavior": {"social": 2}
+        "Motive (anger/revenge)": "motive",
+        "Access capability": "access",
+        "Behavior patterns": "behavior"
     }
 },
 
 {
-    "question": "What stands out most to you?",
+    "question": "What makes someone suspicious?",
     "options": {
-        "System access patterns": {"admin_access": 2},
-        "Emotional dissatisfaction": {"revenge": 2},
-        "Knowledge of systems": {"system_knowledge": 2},
-        "Ability to influence people": {"social": 2}
+        "Emotional dissatisfaction": "motive",
+        "Having required permissions": "access",
+        "Unusual activity timing": "behavior"
     }
 }
 
