@@ -5,100 +5,134 @@ from cases import cases
 from questions import questions
 from engine import calculate_results, generate_explanation
 
-st.set_page_config(page_title="AI Suspect Profiler", layout="centered")
+st.set_page_config(page_title="AI Investigation Engine", layout="centered")
 
-# 🔥 Dark Theme
+# 🔥 FBI STYLE CSS
 st.markdown("""
 <style>
     .stApp {
-        background-color: #0b0f17;
-        color: #e6edf3;
+        background-color: #05070d;
+        color: #e8f0ff;
+        font-family: 'Courier New', monospace;
     }
-    .suspect-card {
+
+    h1, h2, h3 {
+        text-align: center;
+        letter-spacing: 1px;
+    }
+
+    .card {
+        background: #0d1117;
         padding: 15px;
-        border-radius: 12px;
-        background: #161b22;
+        border-radius: 10px;
+        border: 1px solid #1f2a44;
         margin-bottom: 10px;
+    }
+
+    .highlight {
+        color: #00ffcc;
+        font-weight: bold;
+    }
+
+    .section-title {
+        color: #4ea1ff;
+        font-size: 18px;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        border-bottom: 1px solid #1f2a44;
+        padding-bottom: 5px;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# 🎬 Title
-st.title("🕵️ AI Suspect Profiler")
-st.markdown("**Can you identify the criminal better than AI?**")
+# 🎬 HEADER
+st.markdown("<h1>🕵️ AI INVESTIGATION ENGINE</h1>", unsafe_allow_html=True)
+st.markdown("<p style='text-align:center;'>Behavioral Analysis • Evidence Processing • Suspect Profiling</p>", unsafe_allow_html=True)
 
 case = cases[0]
 
-# 📁 Case
-st.subheader(f"📁 Case: {case['case_name']}")
-st.write(case["description"])
+# 📁 CASE FILE
+st.markdown("<div class='section-title'>📁 CASE FILE</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='card'><span class='highlight'>{case['case_name']}</span><br>{case['description']}</div>", unsafe_allow_html=True)
 
-st.divider()
+# 🔍 EVIDENCE
+st.markdown("<div class='section-title'>🔍 EVIDENCE LOG</div>", unsafe_allow_html=True)
+for clue in case["clues"]:
+    st.markdown(f"<div class='card'>• {clue['text']}</div>", unsafe_allow_html=True)
 
-# 🧑 Suspects
-st.subheader("🧑 Suspects")
+# 🧑 SUSPECTS
+st.markdown("<div class='section-title'>🧑 SUSPECT DATABASE</div>", unsafe_allow_html=True)
 
-for suspect in case["suspects"]:
+for s in case["suspects"]:
     st.markdown(f"""
-    <div class="suspect-card">
-        <b>{suspect['name']}</b><br>
-        {"<br>".join("• " + d for d in suspect["description"])}
+    <div class='card'>
+        <span class='highlight'>{s['name']}</span><br>
+        {"<br>".join("• " + d for d in s["description"])}
     </div>
     """, unsafe_allow_html=True)
 
-# 🧠 User Guess
+# 🧠 USER GUESS
+st.markdown("<div class='section-title'>🧠 INITIAL HYPOTHESIS</div>", unsafe_allow_html=True)
+
 user_guess = st.selectbox(
-    "🧠 Who do YOU think is the culprit?",
+    "Select your suspected individual:",
     [s["name"] for s in case["suspects"]]
 )
 
-st.divider()
-
-# ❓ Questions
-st.subheader("🧪 AI Interrogation")
+# ❓ INTERROGATION
+st.markdown("<div class='section-title'>🧪 INTERROGATION MODULE</div>", unsafe_allow_html=True)
 
 user_answers = {}
 
 for i, q in enumerate(questions):
-    st.markdown(f"**{q['question']}**")
-    answer = st.radio("", list(q["options"].keys()), key=i)
-    user_answers[i] = answer
+    st.markdown(f"<div class='card'><b>{q['question']}</b></div>", unsafe_allow_html=True)
+    user_answers[i] = st.radio("", list(q["options"].keys()), key=i)
 
-# 🔍 Analyze
-if st.button("🔍 Analyze"):
+# 🔍 ANALYZE BUTTON
+if st.button("🚨 RUN ANALYSIS"):
 
-    with st.spinner("Analyzing behavioral patterns..."):
+    with st.spinner("Processing behavioral patterns..."):
         time.sleep(2)
 
     results, trait_scores = calculate_results(case, user_answers, questions)
+    top_suspect, prob = results[0]
 
-    top_suspect, top_prob = results[0]
+    # 🎯 RESULT
+    st.markdown("<div class='section-title'>🧠 AI VERDICT</div>", unsafe_allow_html=True)
+    st.success(f"{top_suspect} identified with {prob}% probability")
 
-    # 🎯 Result
-    st.subheader("🧠 AI Prediction")
-    st.success(f"{top_suspect} is the most likely suspect ({top_prob}%)")
+    # 📊 BREAKDOWN
+    st.markdown("<div class='section-title'>📊 PROBABILITY MATRIX</div>", unsafe_allow_html=True)
+    for s, p in results:
+        st.progress(int(p))
+        st.write(f"{s}: {p}%")
 
-    # 📊 Breakdown
-    st.subheader("📊 Probability Breakdown")
-    for suspect, prob in results:
-        st.progress(int(prob))
-        st.write(f"{suspect}: {prob}%")
+    # ⚖️ COMPARISON
+    st.markdown("<div class='section-title'>⚖️ HUMAN vs AI</div>", unsafe_allow_html=True)
+    st.write(f"Your Selection: {user_guess}")
+    st.write(f"AI Selection: {top_suspect}")
 
-    # ⚖️ Comparison
-    st.subheader("⚖️ Human vs AI")
-    st.write(f"🧑 Your Guess: **{user_guess}**")
-    st.write(f"🤖 AI Prediction: **{top_suspect}**")
+    # 🕵️ TRUTH
+    st.markdown("<div class='section-title'>🕵️ CASE RESOLUTION</div>", unsafe_allow_html=True)
+    true = case["true_suspect"]
 
-    # 🧠 Explanation
-    st.subheader("📌 Why did AI choose this?")
-    explanation = generate_explanation(trait_scores)
-    st.info(explanation)
+    st.write(f"Confirmed Culprit: **{true}**")
 
-    # ⚠️ Bias
-    if user_guess != top_suspect:
-        st.warning("Your decision may have been influenced by bias.")
+    if top_suspect == true:
+        st.success("AI successfully identified the suspect.")
     else:
-        st.success("Your reasoning aligns with AI analysis.")
+        st.error("AI analysis was influenced by reasoning bias.")
 
-# ⚠️ Disclaimer
-st.caption("⚠️ This is a fictional simulation for educational purposes only.")
+    # 🧠 EXPLANATION
+    st.markdown("<div class='section-title'>📌 ANALYSIS INSIGHT</div>", unsafe_allow_html=True)
+    st.info(generate_explanation(trait_scores))
+
+    # ⚠️ BIAS
+    if user_guess != true:
+        st.warning("Your reasoning path shows potential bias influence.")
+    else:
+        st.success("Your reasoning aligns with evidence-based logic.")
+
+# ⚠️ FOOTER
+st.markdown("<hr>", unsafe_allow_html=True)
+st.caption("⚠️ Simulation only • Not a real investigative system")
