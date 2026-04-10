@@ -1,7 +1,7 @@
 questions = [
 
 {
-    "question": "Which factor is most important?",
+    "question": "What matters most?",
     "options": {
         "Access": {"admin_access": 2},
         "Motive": {"revenge": 2},
@@ -11,12 +11,12 @@ questions = [
 },
 
 {
-    "question": "What stands out most?",
+    "question": "What stands out?",
     "options": {
         "System usage": {"admin_access": 2},
-        "Emotions": {"emotional": 2},
+        "Emotions": {"revenge": 2},
         "Knowledge": {"system_knowledge": 2},
-        "Trust": {"people_skills": 2}
+        "Trust": {"social": 2}
     }
 }
 
