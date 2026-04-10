@@ -14,11 +14,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+st.title("🕵️ Criminal Profiling Simulator")
+
 # 🧠 STATE
 if "step" not in st.session_state:
     st.session_state.step = 0
-
-st.title("🕵️ Criminal Profiling Simulator")
 
 # =========================
 # STEP 0 → INTRO
@@ -26,50 +26,53 @@ st.title("🕵️ Criminal Profiling Simulator")
 if st.session_state.step == 0:
 
     st.markdown("""
-    ### 🧠 Mission
+    ### 🧠 Your Mission
 
-    You will investigate a case and identify the suspect.
+    Analyze the case, study the suspects, and identify the culprit.
 
-    Then AI will analyze the same case using evidence.
-
-    👉 Goal: Compare **human reasoning vs AI reasoning**
+    Then compare your reasoning with AI.
     """)
 
-    if st.button("Start Investigation"):
+    if st.button("Start"):
         st.session_state.step = 1
 
 
 # =========================
-# STEP 1 → CASE
+# STEP 1 → CASE + SUSPECTS
 # =========================
 elif st.session_state.step == 1:
 
     case = st.selectbox("Select Case", cases, format_func=lambda x: x["case_name"])
     st.session_state.case = case
 
-    st.header("📁 Case Brief")
+    st.header("📁 Case")
     st.write(case["description"])
 
     st.header("🔍 Evidence")
     for c in case["clues"]:
         st.markdown(f"<div class='card'>• {c['text']}</div>", unsafe_allow_html=True)
 
+    st.header("🧑 Suspects")
+
+    for s in case["suspects"]:
+        st.markdown(f"<div class='card'><b>{s['name']}</b></div>", unsafe_allow_html=True)
+
     if st.button("Continue"):
         st.session_state.step = 2
 
 
 # =========================
-# STEP 2 → GUESS
+# STEP 2 → USER GUESS
 # =========================
 elif st.session_state.step == 2:
 
     case = st.session_state.case
 
-    st.header("🧠 Your Initial Guess")
+    st.header("🧠 Your Guess")
 
     suspects = [s["name"] for s in case["suspects"]]
 
-    guess = st.selectbox("Who is the culprit?", suspects)
+    guess = st.selectbox("Who do you think is the culprit?", suspects)
 
     if st.button("Lock Answer"):
         st.session_state.user_guess = guess
@@ -81,29 +84,27 @@ elif st.session_state.step == 2:
 # =========================
 elif st.session_state.step == 3:
 
-    st.header("🧪 AI Behavioral Analysis")
-
-    st.markdown("Answer these to reveal your reasoning pattern.")
+    st.header("🧪 Reasoning Analysis")
 
     user_answers = {}
 
     for i, q in enumerate(questions):
         user_answers[i] = st.radio(q["question"], list(q["options"].keys()), key=i)
 
-    if st.button("Run Analysis"):
+    if st.button("Analyze"):
         st.session_state.answers = user_answers
         st.session_state.step = 4
 
 
 # =========================
-# STEP 4 → RESULTS
+# STEP 4 → RESULT
 # =========================
 elif st.session_state.step == 4:
 
     case = st.session_state.case
     answers = st.session_state.answers
 
-    with st.spinner("Analyzing reasoning vs evidence..."):
+    with st.spinner("Analyzing..."):
         time.sleep(2)
 
     # 🧠 HUMAN MODEL
@@ -134,8 +135,8 @@ elif st.session_state.step == 4:
 
     true = case["true_suspect"]
 
-    # ⚖️ RESULT DISPLAY
-    st.header("⚖️ Human vs AI")
+    # ⚖️ RESULT
+    st.header("⚖️ Results")
 
     col1, col2 = st.columns(2)
 
@@ -158,12 +159,12 @@ elif st.session_state.step == 4:
         st.error("Your reasoning was biased")
         st.warning(f"Bias: {case['bias']}")
     else:
-        st.success("You got it right")
+        st.success("Correct!")
 
     if ai_top == true:
         st.success("AI used evidence correctly")
 
-    st.info("AI relies on structured evidence. Humans rely on intuition.")
+    st.info("Humans rely on intuition. AI relies on structured evidence.")
 
     if st.button("Restart"):
         st.session_state.step = 0
