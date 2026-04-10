@@ -1,22 +1,22 @@
 questions = [
 
 {
-    "question": "What matters most?",
+    "question": "What factor do you consider most important?",
     "options": {
-        "Access": {"admin_access": 2},
-        "Motive": {"revenge": 2},
-        "Technical skill": {"technical": 2},
-        "Behavior": {"social": 2}
+        "Access to system": {"admin_access": 2},
+        "Motive (revenge)": {"revenge": 2},
+        "Technical capability": {"technical": 2},
+        "Social behavior": {"social": 2}
     }
 },
 
 {
-    "question": "What stands out?",
+    "question": "What stands out most to you?",
     "options": {
-        "System usage": {"admin_access": 2},
-        "Emotions": {"revenge": 2},
-        "Knowledge": {"system_knowledge": 2},
-        "Trust": {"social": 2}
+        "System access patterns": {"admin_access": 2},
+        "Emotional dissatisfaction": {"revenge": 2},
+        "Knowledge of systems": {"system_knowledge": 2},
+        "Ability to influence people": {"social": 2}
     }
 }
 
