@@ -3,104 +3,86 @@ import time
 
 from cases import cases
 from questions import questions
-from engine import calculate_results, generate_explanation
+from engine import calculate_user_model, calculate_ai_model
 
-st.set_page_config(page_title="AI Investigation Engine", layout="centered")
+st.set_page_config(page_title="AI Criminal Profiler", layout="wide")
 
-# 🔥 FBI STYLE
+# 🎨 STYLE
 st.markdown("""
 <style>
-.stApp {
-    background-color: #05070d;
-    color: #e8f0ff;
-    font-family: 'Courier New', monospace;
-}
-.card {
-    background: #0d1117;
-    padding: 15px;
-    border-radius: 10px;
-    border: 1px solid #1f2a44;
-    margin-bottom: 10px;
-}
-.section {
-    color: #4ea1ff;
-    margin-top: 20px;
-}
+.stApp {background-color:#05070d;color:white;}
+.card {background:#0d1117;padding:15px;border-radius:10px;margin-bottom:10px;}
 </style>
 """, unsafe_allow_html=True)
 
-st.title("🕵️ AI Investigation Engine")
+st.title("🕵️ Human vs AI Criminal Profiling")
 
-# ✅ SAFE LOAD
-if not cases:
-    st.error("No case data found")
-    st.stop()
+# 🧠 INTRO
+st.info("Analyze the case yourself. Then compare your reasoning with AI.")
 
-case = cases[0]
+# 📁 CASE SELECT
+case = st.selectbox("Select Case", cases, format_func=lambda x: x["case_name"])
 
 # 📁 CASE
-st.markdown("## 📁 Case File")
-st.write(case.get("description", ""))
+st.header("📁 Case")
+st.write(case["description"])
 
-# 🔍 CLUES (SAFE)
-st.markdown("## 🔍 Evidence")
-for clue in case.get("clues", []):
-    st.markdown(f"<div class='card'>• {clue.get('text','')}</div>", unsafe_allow_html=True)
+# 🔍 CLUES
+st.header("🔍 Evidence")
+for c in case["clues"]:
+    st.markdown(f"<div class='card'>• {c['text']}</div>", unsafe_allow_html=True)
 
 # 🧑 SUSPECTS
-st.markdown("## 🧑 Suspects")
-for s in case.get("suspects", []):
+st.header("🧑 Suspects")
+for s in case["suspects"]:
     st.markdown(f"<div class='card'><b>{s['name']}</b><br>" +
-                "<br>".join("• "+d for d in s.get("description", [])) +
+                "<br>".join("• "+d for d in s["description"]) +
                 "</div>", unsafe_allow_html=True)
 
-# 🧠 USER GUESS
-user_guess = st.selectbox(
-    "Who do you think is the culprit?",
-    [s["name"] for s in case.get("suspects", [])]
-)
+# 🧠 USER
+st.header("🧠 Your Analysis")
 
-# ❓ QUESTIONS
+user_guess = st.selectbox("Your suspect", [s["name"] for s in case["suspects"]])
+
 user_answers = {}
+for i,q in enumerate(questions):
+    user_answers[i] = st.radio(q["question"], list(q["options"].keys()), key=i)
 
-for i, q in enumerate(questions):
-    st.markdown(f"**{q['question']}**")
-    user_answers[i] = st.radio("", list(q["options"].keys()), key=i)
+# 🚨 RUN
+if st.button("Run Investigation"):
 
-# 🔍 ANALYSIS
-if st.button("🚨 Run Analysis"):
-
-    with st.spinner("Analyzing..."):
+    with st.spinner("Processing..."):
         time.sleep(2)
 
-    results, trait_scores = calculate_results(case, user_answers, questions)
+    user_res = calculate_user_model(case, user_answers, questions)
+    ai_res = calculate_ai_model(case)
 
-    if not results:
-        st.error("Analysis failed")
-        st.stop()
+    user_top, _ = user_res[0]
+    ai_top, _ = ai_res[0]
+    true = case["true_suspect"]
 
-    top_suspect, prob = results[0]
+    col1, col2 = st.columns(2)
 
-    st.success(f"AI Prediction: {top_suspect} ({prob}%)")
+    with col1:
+        st.subheader("🧠 Your Result")
+        st.write(user_top)
 
-    st.markdown("## 📊 Breakdown")
-    for s, p in results:
-        st.write(f"{s}: {p}%")
+    with col2:
+        st.subheader("🤖 AI Result")
+        st.write(ai_top)
 
-    st.markdown("## ⚖️ Comparison")
-    st.write(f"Your Guess: {user_guess}")
-    st.write(f"AI Guess: {top_suspect}")
+    st.header("🕵️ Truth")
+    st.write(true)
 
-    st.markdown("## 🕵️ Truth")
-    true = case.get("true_suspect", "Unknown")
-    st.write(f"Actual Culprit: {true}")
+    st.header("📊 Insight")
 
-    if top_suspect == true:
-        st.success("AI correct")
+    if user_top != true:
+        st.error("Your reasoning was flawed.")
+        st.warning(f"Bias detected: {case['bias_type']}")
     else:
-        st.error("AI influenced by reasoning")
+        st.success("You got it right!")
 
-    st.markdown("## 📌 Explanation")
-    st.info(generate_explanation(trait_scores))
+    if ai_top == true:
+        st.success("AI correctly solved the case using evidence.")
 
-st.caption("⚠️ Educational simulation only")
+st.caption("Educational simulation")
