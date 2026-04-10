@@ -1,15 +1,20 @@
 def calculate_results(case, user_answers, questions):
-    
-    # Step 1: Trait scoring
+
     trait_scores = {}
 
+    # 🧠 Step 1: Add CLUE weights (fixed truth)
+    for clue in case["clues"]:
+        for trait, weight in clue["traits"].items():
+            trait_scores[trait] = trait_scores.get(trait, 0) + weight
+
+    # 🧠 Step 2: Add USER weights
     for q_index, selected_option in user_answers.items():
         option_weights = questions[q_index]["options"][selected_option]
 
         for trait, weight in option_weights.items():
             trait_scores[trait] = trait_scores.get(trait, 0) + weight
 
-    # Step 2: Suspect scoring
+    # 🧠 Step 3: Score suspects
     suspect_scores = {}
 
     for suspect in case["suspects"]:
@@ -20,24 +25,18 @@ def calculate_results(case, user_answers, questions):
             if trait in trait_scores:
                 suspect_scores[name] += trait_scores[trait]
 
-    # Step 3: Convert to probability
-    total_score = sum(suspect_scores.values())
-
+    # 🧠 Step 4: Convert to probability
+    total = sum(suspect_scores.values())
     probabilities = {}
-    if total_score == 0:
-        for suspect in suspect_scores:
-            probabilities[suspect] = 0
-    else:
-        for suspect, score in suspect_scores.items():
-            probabilities[suspect] = round((score / total_score) * 100, 2)
 
-    # Step 4: Sort
+    for s, score in suspect_scores.items():
+        probabilities[s] = round((score / total) * 100, 2) if total > 0 else 0
+
     sorted_results = sorted(probabilities.items(), key=lambda x: x[1], reverse=True)
 
     return sorted_results, trait_scores
 
 
 def generate_explanation(trait_scores):
-    top_traits = sorted(trait_scores.items(), key=lambda x: x[1], reverse=True)[:3]
-    explanation = "The AI prioritized: " + ", ".join([t for t, _ in top_traits])
-    return explanation
+    top = sorted(trait_scores.items(), key=lambda x: x[1], reverse=True)[:3]
+    return "AI prioritized: " + ", ".join([t for t, _ in top])
