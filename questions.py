@@ -1,20 +1,20 @@
 questions = [
 
 {
-    "question": "What matters MOST in identifying the culprit?",
+    "question": "What matters most?",
     "options": {
-        "Motive (anger/revenge)": "motive",
-        "Access capability": "access",
-        "Behavior patterns": "behavior"
+        "Motive": "motive",
+        "Access": "access",
+        "Behavior": "behavior"
     }
 },
 
 {
     "question": "What makes someone suspicious?",
     "options": {
-        "Emotional dissatisfaction": "motive",
-        "Having required permissions": "access",
-        "Unusual activity timing": "behavior"
+        "Emotion": "motive",
+        "Permissions": "access",
+        "Activity": "behavior"
     }
 }
 
