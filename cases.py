@@ -1,48 +1,54 @@
 cases = [
     {
         "case_name": "The Insider Leak",
-        "description": "A confidential product design was leaked to a competitor just days before launch. No signs of external hacking were found. Investigators suspect an internal breach.",
+        "description": "A confidential product design was leaked to a competitor just days before launch. No signs of external hacking were found.",
+
+        "true_suspect": "Arjun (Ex-Employee)",
+
+        "clues": [
+            {"text": "No malware detected in system logs", "traits": {"admin_access": 2, "system_knowledge": 2}},
+            {"text": "Data accessed using valid credentials", "traits": {"admin_access": 3}},
+            {"text": "Leak occurred after office hours", "traits": {"long_hours": 2, "logical": 1}},
+            {"text": "Recent employee dissatisfaction reported", "traits": {"revenge": 3, "emotional": 2}}
+        ],
 
         "suspects": [
             {
                 "name": "Rohan (IT Administrator)",
                 "description": [
                     "Has full system access",
-                    "Works late nights frequently",
-                    "Quiet and keeps to himself",
-                    "Highly logical thinker"
+                    "Works late nights",
+                    "Highly logical",
+                    "Introverted"
                 ],
-                "traits": ["admin_access", "technical", "introvert", "logical", "long_hours"]
+                "traits": ["admin_access", "technical", "logical", "long_hours"]
             },
             {
                 "name": "Priya (HR Manager)",
                 "description": [
-                    "Has access to employee records",
-                    "Very social and well-connected",
-                    "Trusted by most employees",
-                    "Not very technical"
+                    "Highly social",
+                    "Trusted role",
+                    "Low technical knowledge"
                 ],
-                "traits": ["social", "trusted_role", "low_technical", "people_skills"]
+                "traits": ["social", "people_skills", "trusted_role"]
             },
             {
                 "name": "Arjun (Ex-Employee)",
                 "description": [
-                    "Left the company 2 weeks ago",
-                    "Had deep knowledge of internal systems",
-                    "Was unhappy about not getting promoted",
-                    "Still in contact with employees"
+                    "Recently left company",
+                    "Strong system knowledge",
+                    "Emotionally dissatisfied"
                 ],
-                "traits": ["revenge", "system_knowledge", "recent_exit", "emotional"]
+                "traits": ["revenge", "system_knowledge", "emotional"]
             },
             {
                 "name": "Neha (Intern)",
                 "description": [
-                    "Curious and eager to learn",
-                    "Explores systems beyond assigned tasks",
-                    "Limited access permissions",
-                    "Frequently asks technical questions"
+                    "Curious learner",
+                    "Explores systems",
+                    "Limited access"
                 ],
-                "traits": ["curious", "learning", "low_access", "explorer"]
+                "traits": ["curious", "explorer", "low_access"]
             }
         ]
     }
