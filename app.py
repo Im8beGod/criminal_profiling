@@ -27,9 +27,9 @@ st.markdown("""
     border: 1px solid rgba(0,255,200,0.2);
     box-shadow: 0 0 15px rgba(0,255,200,0.15);
 }
-.highlight-eval {border:2px solid yellow;}
-.highlight-pass {border:2px solid #00ffcc;}
-.highlight-fail {border:2px solid red;}
+.highlight-eval {border:2px solid yellow; box-shadow:0 0 10px yellow;}
+.highlight-pass {border:2px solid #00ffcc; box-shadow:0 0 10px #00ffcc;}
+.highlight-fail {border:2px solid red; box-shadow:0 0 10px red;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -45,7 +45,7 @@ def typewriter(text, speed=0.01):
         time.sleep(speed)
 
 # =========================
-# 🎬 MISSION
+# 🎬 MISSION BRIEFING
 # =========================
 if "started" not in st.session_state:
     st.session_state.started = False
@@ -54,7 +54,14 @@ if not st.session_state.started:
     st.title("🕵️ Forensic Investigation System")
 
     typewriter("Initializing system...\n")
-    typewriter("Loading modules...\n")
+    typewriter("Loading intelligence modules...\n")
+
+    st.markdown("""
+    ### 🔒 CLASSIFIED BRIEFING
+    Analyze evidence. Eliminate impossibilities. Identify the culprit.
+
+    ⚠️ Constraints > Motive
+    """)
 
     if st.button("🚀 START INVESTIGATION"):
         st.session_state.started = True
@@ -63,9 +70,9 @@ if not st.session_state.started:
     st.stop()
 
 # =========================
-# MODE
+# 🎯 MODE + CASE LOCK
 # =========================
-mode = st.radio("Mode", ["Static Cases","Dynamic Case"])
+mode = st.radio("Mode", ["Static Cases", "Dynamic Case"])
 
 if "current_case" not in st.session_state:
     st.session_state.current_case = random.choice(cases)
@@ -74,30 +81,46 @@ if st.button("🔄 New Case"):
     st.session_state.current_case = random.choice(cases)
     st.rerun()
 
-case = generate_case() if mode=="Dynamic Case" else st.session_state.current_case
+case = generate_case() if mode == "Dynamic Case" else st.session_state.current_case
 
 st.title("🕵️ Investigation Console")
+st.caption(f"Case ID: {hash(case['case_name']) % 10000}")
 
 # =========================
-# CASE INFO (STRUCTURED)
+# 🎯 DIFFICULTY
+# =========================
+if "score_history" not in st.session_state:
+    st.session_state.score_history = []
+
+avg = sum(st.session_state.score_history)/len(st.session_state.score_history) if st.session_state.score_history else 0
+difficulty = "Hard" if avg > 30 else "Medium" if avg > 0 else "Easy"
+st.write(f"🎯 Difficulty Level: {difficulty}")
+
+# =========================
+# 🔍 CLUES
+# =========================
+clues = case["clues"][:]
+
+# =========================
+# 🖥️ INFORMATION FLOW
 # =========================
 st.markdown("## 📁 CASE BRIEF")
 st.markdown(f"<div class='panel'>{case['description']}</div>", unsafe_allow_html=True)
 
 st.markdown("## 🕒 TIMELINE")
-for t in case.get("timeline",[]):
+for t in case.get("timeline", []):
     st.markdown(f"<div class='panel'>• {t}</div>", unsafe_allow_html=True)
 
-st.markdown("## 🖥️ TECHNICAL")
-for t in case.get("technical",[]):
+st.markdown("## 🖥️ TECHNICAL EVIDENCE")
+for t in case.get("technical", []):
     st.markdown(f"<div class='panel'>• {t}</div>", unsafe_allow_html=True)
 
 st.markdown("## 🧩 OBSERVATIONS")
-for o in case.get("observations",[]):
+for o in case.get("observations", []):
     st.markdown(f"<div class='panel'>• {o}</div>", unsafe_allow_html=True)
 
 # =========================
-# SUSPECTS (FULL INFO)
+# 🧑 SUSPECT DOSSIERS
 # =========================
 st.markdown("## 🧑 SUSPECT DOSSIERS")
 
@@ -105,27 +128,30 @@ for s in case["suspects"]:
     st.markdown(f"""
     <div class='panel'>
     <b>{s['name']}</b><br>
-    {"<br>".join("• "+t.replace("_"," ") for t in s["traits"])}
+    {"<br>".join("• " + t.replace("_"," ") for t in s["traits"])}
     <br><br>
-    {"<br>".join("• "+d for d in s.get("details",[]))}
+    {"<br>".join("• " + d for d in s.get("details", []))}
     </div>
     """, unsafe_allow_html=True)
 
 # =========================
-# QUESTIONS
+# 🧠 ANALYSIS
 # =========================
-st.markdown("## 🧠 ANALYSIS")
+st.markdown("## 🧠 YOUR ANALYSIS")
 
-bias_counter={}
-for i,q in enumerate(questions):
+bias_counter = {}
+progress = st.progress(0)
+
+for i, q in enumerate(questions):
     ans = st.radio(q["question"], list(q["options"].keys()), key=i)
     bias = q["options"][ans]
-    bias_counter[bias] = bias_counter.get(bias,0)+1
+    bias_counter[bias] = bias_counter.get(bias, 0) + 1
+    progress.progress((i+1)/len(questions))
 
 user_guess = st.selectbox("Select suspect:", [s["name"] for s in case["suspects"]])
 
 # =========================
-# ML + LOGIC (UNCHANGED)
+# 🟢 ML + LOGIC
 # =========================
 def extract_features(s):
     return np.array([
@@ -154,47 +180,78 @@ def predict(case,w):
     return {s["name"]: logistic(np.dot(w,extract_features(s))) for s in case["suspects"]}
 
 # =========================
-# RUN
+# 🚨 RUN INVESTIGATION
 # =========================
 if st.button("🚨 RUN INVESTIGATION"):
 
-    typewriter("Analyzing...\n",0.02)
+    typewriter("System analyzing suspects...\n", 0.02)
 
-    ai_scores={}
+    ai_scores = {}
+
     for s in case["suspects"]:
-        score=0
-        for clue in case["clues"]:
-            if clue["type"]=="constraint":
+        score = 0
+        container = st.empty()
+
+        container.markdown(f"<div class='panel highlight-eval'><b>{s['name']}</b><br>Evaluating...</div>", unsafe_allow_html=True)
+        time.sleep(0.3)
+
+        for clue in clues:
+            if clue["type"] == "constraint":
                 if not all(r in s["traits"] for r in clue["rules"]):
-                    score-=100
+                    score -= 100
+                    status = "highlight-fail"
                 else:
-                    score+=10
+                    score += 10
+                    status = "highlight-pass"
+
+        container.markdown(f"<div class='panel {status}'><b>{s['name']}</b></div>", unsafe_allow_html=True)
+
         ai_scores[s["name"]] = score
 
-    ai_top=max(ai_scores,key=ai_scores.get)
-    true=case["true_suspect"]
+    ai_top = max(ai_scores, key=ai_scores.get)
+    true = case["true_suspect"]
 
-    weights=train_model(case["clues"])
-    ml_results=predict(case,weights)
-    ml_top=max(ml_results,key=ml_results.get)
+    weights = train_model(clues)
+    ml_results = predict(case, weights)
+    ml_top = max(ml_results, key=ml_results.get)
 
+    # =========================
     # RESULTS
+    # =========================
     st.markdown("## ⚖️ RESULTS")
-    st.write(f"🧠 You: {user_guess}")
-    st.write(f"🤖 System: {ai_top}")
-    st.write(f"📊 Model: {ml_top}")
+
+    c1, c2, c3 = st.columns(3)
+    c1.write(f"🧠 You: {user_guess}")
+    c2.write(f"🤖 System: {ai_top}")
+    c3.write(f"📊 Model: {ml_top}")
+
     st.write(f"🕵️ Actual: {true}")
 
-    # ANALYTICS
-    st.markdown("## 📊 ANALYTICS")
+    # =========================
+    # 📊 ANALYTICS
+    # =========================
+    st.markdown("## 📊 ADVANCED ANALYTICS")
 
-    for n,p in ml_results.items():
-        percent=int(p*100)
+    st.markdown("### 🔍 Probability Distribution")
+    for n, p in ml_results.items():
+        percent = int(p * 100)
         st.write(f"{n}: {percent}%")
         st.progress(percent)
 
-    total=sum(bias_counter.values()) if bias_counter else 1
-    for k,v in bias_counter.items():
-        percent=int((v/total)*100)
+    st.markdown("### 🧠 Bias Profile")
+    total = sum(bias_counter.values()) if bias_counter else 1
+    for k, v in bias_counter.items():
+        percent = int((v / total) * 100)
         st.write(f"{k}: {percent}%")
         st.progress(percent)
+
+    st.markdown("### 🎯 Decision Analysis")
+    if user_guess == true:
+        st.success("Correct identification")
+    else:
+        st.error("Incorrect reasoning")
+
+    score = 50 if user_guess == true else -20
+    st.session_state.score_history.append(score)
+
+    st.markdown(f"## 🎮 SCORE: {score}")
