@@ -218,14 +218,21 @@ if st.button("🚨 RUN INVESTIGATION"):
         container.markdown(f"<div class='panel highlight-eval'><b>{s['name']}</b><br>Evaluating...</div>", unsafe_allow_html=True)
         time.sleep(0.3)
 
+        failed = False
+
         for clue in clues:
             if clue["type"] == "constraint":
                 if not all(r in s["traits"] for r in clue["rules"]):
                     score -= 100
-                    status = "highlight-fail"
+                    failed = True
                 else:
                     score += 10
-                    status = "highlight-pass"
+
+# FINAL STATUS DECISION (IMPORTANT)
+        if failed:
+            status = "highlight-fail"
+        else:
+            status = "highlight-pass"
 
         container.markdown(f"<div class='panel {status}'><b>{s['name']}</b></div>", unsafe_allow_html=True)
 
