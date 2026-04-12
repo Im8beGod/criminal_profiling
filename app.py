@@ -231,6 +231,11 @@ if st.button("🚨 RUN INVESTIGATION"):
     ml_results = predict(case, weights)
     ml_top = max(ml_results, key=ml_results.get)
 
+    st.session_state.ml_results = ml_results
+    st.session_state.ml_top = ml_top
+    st.session_state.ai_top = ai_top
+    st.session_state.true = true
+
     # RESULTS
     st.markdown("## ⚖️ RESULTS")
 
@@ -252,10 +257,13 @@ st.markdown("## 📊 ADVANCED ANALYTICS")
 # -------------------------
 st.markdown("### 🔍 Probability Distribution")
 
-for n, p in ml_results.items():
-    percent = int(p * 100)
-    st.write(f"{n}: {percent}%")
-    st.progress(percent)
+if "ml_results" in st.session_state:
+    ml_results = st.session_state.ml_results
+
+    for n, p in ml_results.items():
+        percent = int(p * 100)
+        st.write(f"{n}: {percent}%")
+        st.progress(percent)
 
 # -------------------------
 # 🧠 Cognitive Bias Profile (FIXED)
@@ -292,7 +300,10 @@ for k, v in bias_counter.items():
 # -------------------------
 st.markdown("## 🎯 DECISION ANALYSIS")
 
-if user_guess == true:
-    st.success("Correct identification")
-else:
-    st.error("Incorrect reasoning")
+true = st.session_state.get("true", None)
+
+if true is not None:
+    if user_guess == true:
+        st.success("Correct identification")
+    else:
+        st.error("Incorrect reasoning")
