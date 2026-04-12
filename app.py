@@ -30,6 +30,10 @@ st.markdown("""
 .highlight-eval {border:2px solid yellow; box-shadow:0 0 10px yellow;}
 .highlight-pass {border:2px solid #00ffcc; box-shadow:0 0 10px #00ffcc;}
 .highlight-fail {border:2px solid red; box-shadow:0 0 10px red;}
+.panel:hover {
+    transform: scale(1.02);
+    transition: 0.2s;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -131,15 +135,22 @@ col3, col4 = st.columns(2)
 with col3:
     st.markdown("### 🧑 SUSPECT DOSSIERS")
 
-    for s in case["suspects"]:
-        st.markdown(f"""
-        <div class='panel'>
-        <b>{s['name']}</b><br>
-        {"<br>".join("• " + t.replace("_"," ") for t in s["traits"])}
-        <br><br>
-        {"<br>".join("• " + d for d in s.get("details", []))}
-        </div>
-        """, unsafe_allow_html=True)
+    for i, s in enumerate(case["suspects"]):
+
+        with st.expander(f"🔍 {s['name']}", expanded=False):
+
+            st.markdown("<div class='panel'>", unsafe_allow_html=True)
+
+            st.markdown("**🧬 Traits**")
+            for t in s["traits"]:
+                st.markdown(f"- {t.replace('_',' ').title()}")
+
+            if "details" in s:
+                st.markdown("**📄 Background**")
+                for d in s["details"]:
+                    st.markdown(f"- {d}")
+
+            st.markdown("</div>", unsafe_allow_html=True)
 
 with col4:
     st.markdown("### 🧠 YOUR ANALYSIS")
