@@ -83,6 +83,14 @@ if "current_case" not in st.session_state:
 
 if st.button("🔄 New Case"):
     st.session_state.current_case = random.choice(cases)
+
+    # RESET STATE
+    st.session_state.analysis_done = False
+    st.session_state.pop("ml_results", None)
+    st.session_state.pop("ml_top", None)
+    st.session_state.pop("ai_top", None)
+    st.session_state.pop("true", None)
+
     st.rerun()
 
 case = generate_case() if mode == "Dynamic Case" else st.session_state.current_case
@@ -195,10 +203,9 @@ def train_model(clues):
 def predict(case,w):
     return {s["name"]: logistic(np.dot(w,extract_features(s))) for s in case["suspects"]}
 
-# =========================
-# 🚨 RUN INVESTIGATION
-# =========================
 if st.button("🚨 RUN INVESTIGATION"):
+
+    st.session_state.analysis_done = True
 
     typewriter("System analyzing suspects...\n", 0.02)
 
@@ -231,12 +238,15 @@ if st.button("🚨 RUN INVESTIGATION"):
     ml_results = predict(case, weights)
     ml_top = max(ml_results, key=ml_results.get)
 
+    # ✅ STORE RESULTS (IMPORTANT FIX)
     st.session_state.ml_results = ml_results
     st.session_state.ml_top = ml_top
     st.session_state.ai_top = ai_top
     st.session_state.true = true
 
+    # =========================
     # RESULTS
+    # =========================
     st.markdown("## ⚖️ RESULTS")
 
     c1, c2, c3 = st.columns(3)
@@ -248,62 +258,71 @@ if st.button("🚨 RUN INVESTIGATION"):
 
     # ANALYTICS
     # =========================
-# 📊 ADVANCED ANALYTICS
 # =========================
-st.markdown("## 📊 ADVANCED ANALYTICS")
+# 🧠 STATE INITIALIZATION (ADD THIS)
+# =========================
+if "analysis_done" not in st.session_state:
+    st.session_state.analysis_done = False
 
-# -------------------------
-# 🔍 Probability Distribution
-# -------------------------
-st.markdown("### 🔍 Probability Distribution")
+# =========================
+# 📊 ADVANCED ANALYTICS (FIXED)
+# =========================
+if st.session_state.analysis_done:
 
-if "ml_results" in st.session_state:
-    ml_results = st.session_state.ml_results
+    st.markdown("## 📊 ADVANCED ANALYTICS")
 
-    for n, p in ml_results.items():
-        percent = int(p * 100)
-        st.write(f"{n}: {percent}%")
+    # -------------------------
+    # 🔍 Probability Distribution
+    # -------------------------
+    if "ml_results" in st.session_state:
+        ml_results = st.session_state.ml_results
+
+        st.markdown("### 🔍 Probability Distribution")
+
+        for n, p in ml_results.items():
+            percent = int(p * 100)
+            st.write(f"{n}: {percent}%")
+            st.progress(percent)
+
+    # -------------------------
+    # 🧠 Cognitive Bias Profile
+    # -------------------------
+    st.markdown("""
+    ### 🧠 Cognitive Bias Profile
+
+    This reflects **how you approached the investigation**:
+
+    - 🔴 Motive-driven → emotions, revenge, intent  
+    - 🔵 Access-driven → capability & system constraints  
+    - 🟡 Behavior-driven → patterns & actions  
+
+    ⚠️ Real investigations prioritize constraints over motive
+    """)
+
+    total = sum(bias_counter.values()) if bias_counter else 1
+
+    for k, v in bias_counter.items():
+        percent = int((v / total) * 100)
+
+        if k == "motive":
+            label = "🔴 Motive Focus"
+        elif k == "access":
+            label = "🔵 Access Focus"
+        else:
+            label = "🟡 Behavior Focus"
+
+        st.write(f"{label}: {percent}%")
         st.progress(percent)
 
-# -------------------------
-# 🧠 Cognitive Bias Profile (FIXED)
-# -------------------------
-st.markdown("""
-### 🧠 Cognitive Bias Profile
+    # -------------------------
+    # 🎯 Decision Analysis
+    # -------------------------
+    st.markdown("## 🎯 DECISION ANALYSIS")
 
-This reflects **how you approached the investigation**:
+    true = st.session_state.get("true", None)
 
-- 🔴 **Motive-driven** → Focus on emotions, revenge, intent  
-- 🔵 **Access-driven** → Focus on capability and system constraints  
-- 🟡 **Behavior-driven** → Focus on patterns and actions  
-
-⚠️ Real-world investigations prioritize **access & constraints over motive**
-""")
-
-total = sum(bias_counter.values()) if bias_counter else 1
-
-for k, v in bias_counter.items():
-    percent = int((v / total) * 100)
-
-    if k == "motive":
-        label = "🔴 Motive Focus"
-    elif k == "access":
-        label = "🔵 Access Focus"
-    else:
-        label = "🟡 Behavior Focus"
-
-    st.write(f"{label}: {percent}%")
-    st.progress(percent)
-
-# -------------------------
-# 🎯 Decision Analysis
-# -------------------------
-st.markdown("## 🎯 DECISION ANALYSIS")
-
-true = st.session_state.get("true", None)
-
-if true is not None:
-    if user_guess == true:
-        st.success("Correct identification")
-    else:
-        st.error("Incorrect reasoning")
+    if true is not None:
+        if user_guess == true:
+            st.success("Correct identification")
+        else:
+            st.error("Incorrect reasoning")
