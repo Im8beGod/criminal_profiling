@@ -242,26 +242,57 @@ if st.button("🚨 RUN INVESTIGATION"):
     st.write(f"🕵️ Actual: {true}")
 
     # ANALYTICS
-    st.markdown("## 📊 ADVANCED ANALYTICS")
+    # =========================
+# 📊 ADVANCED ANALYTICS
+# =========================
+st.markdown("## 📊 ADVANCED ANALYTICS")
 
-    for n, p in ml_results.items():
-        percent = int(p * 100)
-        st.write(f"{n}: {percent}%")
-        st.progress(percent)
+# -------------------------
+# 🔍 Probability Distribution
+# -------------------------
+st.markdown("### 🔍 Probability Distribution")
 
-    total = sum(bias_counter.values()) if bias_counter else 1
-    for k, v in bias_counter.items():
-        percent = int((v / total) * 100)
-        st.write(f"{k}: {percent}%")
-        st.progress(percent)
+for n, p in ml_results.items():
+    percent = int(p * 100)
+    st.write(f"{n}: {percent}%")
+    st.progress(percent)
 
-    st.markdown("## 🎯 DECISION ANALYSIS")
-    if user_guess == true:
-        st.success("Correct identification")
+# -------------------------
+# 🧠 Cognitive Bias Profile (FIXED)
+# -------------------------
+st.markdown("""
+### 🧠 Cognitive Bias Profile
+
+This reflects **how you approached the investigation**:
+
+- 🔴 **Motive-driven** → Focus on emotions, revenge, intent  
+- 🔵 **Access-driven** → Focus on capability and system constraints  
+- 🟡 **Behavior-driven** → Focus on patterns and actions  
+
+⚠️ Real-world investigations prioritize **access & constraints over motive**
+""")
+
+total = sum(bias_counter.values()) if bias_counter else 1
+
+for k, v in bias_counter.items():
+    percent = int((v / total) * 100)
+
+    if k == "motive":
+        label = "🔴 Motive Focus"
+    elif k == "access":
+        label = "🔵 Access Focus"
     else:
-        st.error("Incorrect reasoning")
+        label = "🟡 Behavior Focus"
 
-    score = 50 if user_guess == true else -20
-    st.session_state.score_history.append(score)
+    st.write(f"{label}: {percent}%")
+    st.progress(percent)
 
-    st.markdown(f"## 🎮 SCORE: {score}")
+# -------------------------
+# 🎯 Decision Analysis
+# -------------------------
+st.markdown("## 🎯 DECISION ANALYSIS")
+
+if user_guess == true:
+    st.success("Correct identification")
+else:
+    st.error("Incorrect reasoning")
