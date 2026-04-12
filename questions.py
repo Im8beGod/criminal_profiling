@@ -1,55 +1,91 @@
 questions = [
 
 {
-    "question": "What matters MOST in identifying the culprit?",
+    "question": "What matters most in identifying the culprit?",
     "options": {
-        "Emotional motive (anger, revenge)": "motive",
-        "Access to the system": "access",
+        "Emotional motive": "motive",
+        "System access": "access",
         "Behavioral patterns": "behavior"
     }
 },
 
 {
-    "question": "If someone has motive but NO access, how suspicious are they?",
+    "question": "If someone has motive but no access?",
     "options": {
-        "Very suspicious": "motive",
-        "Moderately suspicious": "behavior",
-        "Not very suspicious": "access"
+        "Highly suspicious": "motive",
+        "Somewhat suspicious": "behavior",
+        "Not suspicious": "access"
     }
 },
 
 {
     "question": "What is stronger evidence?",
     "options": {
-        "Emotional dissatisfaction": "motive",
-        "Ability to execute the action": "access",
-        "Unusual timing/activity": "behavior"
+        "Anger or revenge": "motive",
+        "Capability to execute": "access",
+        "Strange behavior": "behavior"
     }
 },
 
 {
-    "question": "Which factor do you trust more?",
+    "question": "Which do you trust more?",
     "options": {
-        "Human behavior": "behavior",
+        "Human emotion": "motive",
         "System constraints": "access",
-        "Personal relationships": "motive"
+        "Observed actions": "behavior"
     }
 },
 
 {
-    "question": "If logs show restricted access, what do you conclude?",
+    "question": "If logs show restricted access?",
     "options": {
-        "Someone bypassed the system": "motive",
-        "Only authorized users are possible": "access",
+        "System was bypassed": "motive",
+        "Only authorized users possible": "access",
         "Timing matters more": "behavior"
     }
 },
 
 {
-    "question": "What is your investigation style?",
+    "question": "Most reliable reasoning method?",
     "options": {
-        "Follow emotional clues": "motive",
-        "Follow technical constraints": "access",
+        "Psychology": "motive",
+        "Technical feasibility": "access",
+        "Patterns": "behavior"
+    }
+},
+
+{
+    "question": "What eliminates a suspect fastest?",
+    "options": {
+        "No motive": "motive",
+        "No access": "access",
+        "No suspicious behavior": "behavior"
+    }
+},
+
+{
+    "question": "What is most misleading?",
+    "options": {
+        "Emotions": "motive",
+        "Logs": "access",
+        "Behavior": "behavior"
+    }
+},
+
+{
+    "question": "If someone behaves oddly but lacks access?",
+    "options": {
+        "Still suspect": "motive",
+        "Unlikely culprit": "access",
+        "Needs more analysis": "behavior"
+    }
+},
+
+{
+    "question": "Best investigation strategy?",
+    "options": {
+        "Follow emotions": "motive",
+        "Follow constraints": "access",
         "Follow patterns": "behavior"
     }
 }
