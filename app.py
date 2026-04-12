@@ -102,56 +102,61 @@ st.write(f"🎯 Difficulty Level: {difficulty}")
 clues = case["clues"][:]
 
 # =========================
-# 🖥️ INFORMATION FLOW
+# 🖥️ SIDE-BY-SIDE INFO (FIXED)
 # =========================
-st.markdown("## 📁 CASE BRIEF")
-st.markdown(f"<div class='panel'>{case['description']}</div>", unsafe_allow_html=True)
+col1, col2 = st.columns(2)
 
-st.markdown("## 🕒 TIMELINE")
-for t in case.get("timeline", []):
-    st.markdown(f"<div class='panel'>• {t}</div>", unsafe_allow_html=True)
+with col1:
+    st.markdown("### 📁 CASE BRIEF")
+    st.markdown(f"<div class='panel'>{case['description']}</div>", unsafe_allow_html=True)
 
-st.markdown("## 🖥️ TECHNICAL EVIDENCE")
-for t in case.get("technical", []):
-    st.markdown(f"<div class='panel'>• {t}</div>", unsafe_allow_html=True)
+    st.markdown("### 🕒 TIMELINE")
+    for t in case.get("timeline", []):
+        st.markdown(f"<div class='panel'>• {t}</div>", unsafe_allow_html=True)
 
-st.markdown("## 🧩 OBSERVATIONS")
-for o in case.get("observations", []):
-    st.markdown(f"<div class='panel'>• {o}</div>", unsafe_allow_html=True)
+with col2:
+    st.markdown("### 🖥️ TECHNICAL EVIDENCE")
+    for t in case.get("technical", []):
+        st.markdown(f"<div class='panel'>• {t}</div>", unsafe_allow_html=True)
 
-# =========================
-# 🧑 SUSPECT DOSSIERS
-# =========================
-st.markdown("## 🧑 SUSPECT DOSSIERS")
-
-for s in case["suspects"]:
-    st.markdown(f"""
-    <div class='panel'>
-    <b>{s['name']}</b><br>
-    {"<br>".join("• " + t.replace("_"," ") for t in s["traits"])}
-    <br><br>
-    {"<br>".join("• " + d for d in s.get("details", []))}
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("### 🧩 OBSERVATIONS")
+    for o in case.get("observations", []):
+        st.markdown(f"<div class='panel'>• {o}</div>", unsafe_allow_html=True)
 
 # =========================
-# 🧠 ANALYSIS
+# 🧑 SUSPECTS + ANALYSIS SIDE-BY-SIDE
 # =========================
-st.markdown("## 🧠 YOUR ANALYSIS")
+col3, col4 = st.columns(2)
 
-bias_counter = {}
-progress = st.progress(0)
+with col3:
+    st.markdown("### 🧑 SUSPECT DOSSIERS")
 
-for i, q in enumerate(questions):
-    ans = st.radio(q["question"], list(q["options"].keys()), key=i)
-    bias = q["options"][ans]
-    bias_counter[bias] = bias_counter.get(bias, 0) + 1
-    progress.progress((i+1)/len(questions))
+    for s in case["suspects"]:
+        st.markdown(f"""
+        <div class='panel'>
+        <b>{s['name']}</b><br>
+        {"<br>".join("• " + t.replace("_"," ") for t in s["traits"])}
+        <br><br>
+        {"<br>".join("• " + d for d in s.get("details", []))}
+        </div>
+        """, unsafe_allow_html=True)
 
-user_guess = st.selectbox("Select suspect:", [s["name"] for s in case["suspects"]])
+with col4:
+    st.markdown("### 🧠 YOUR ANALYSIS")
+
+    bias_counter = {}
+    progress = st.progress(0)
+
+    for i, q in enumerate(questions):
+        ans = st.radio(q["question"], list(q["options"].keys()), key=i)
+        bias = q["options"][ans]
+        bias_counter[bias] = bias_counter.get(bias, 0) + 1
+        progress.progress((i+1)/len(questions))
+
+    user_guess = st.selectbox("Select suspect:", [s["name"] for s in case["suspects"]])
 
 # =========================
-# 🟢 ML + LOGIC
+# 🟢 ML + LOGIC (UNCHANGED)
 # =========================
 def extract_features(s):
     return np.array([
@@ -215,9 +220,7 @@ if st.button("🚨 RUN INVESTIGATION"):
     ml_results = predict(case, weights)
     ml_top = max(ml_results, key=ml_results.get)
 
-    # =========================
     # RESULTS
-    # =========================
     st.markdown("## ⚖️ RESULTS")
 
     c1, c2, c3 = st.columns(3)
@@ -227,25 +230,21 @@ if st.button("🚨 RUN INVESTIGATION"):
 
     st.write(f"🕵️ Actual: {true}")
 
-    # =========================
-    # 📊 ANALYTICS
-    # =========================
+    # ANALYTICS
     st.markdown("## 📊 ADVANCED ANALYTICS")
 
-    st.markdown("### 🔍 Probability Distribution")
     for n, p in ml_results.items():
         percent = int(p * 100)
         st.write(f"{n}: {percent}%")
         st.progress(percent)
 
-    st.markdown("### 🧠 Bias Profile")
     total = sum(bias_counter.values()) if bias_counter else 1
     for k, v in bias_counter.items():
         percent = int((v / total) * 100)
         st.write(f"{k}: {percent}%")
         st.progress(percent)
 
-    st.markdown("### 🎯 Decision Analysis")
+    st.markdown("## 🎯 DECISION ANALYSIS")
     if user_guess == true:
         st.success("Correct identification")
     else:
